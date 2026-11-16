@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sindrebassen Booking</title>
+<meta name="description" content="Bookingsystem for Sindre. Leah og bestekompisen deler ham, med prosentkamp om hvem som har hatt ham mest.">
+<meta name="theme-color" content="#FFF0F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1B0B13" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sindrebassen">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@500;700;800;900&display=swap">
+<style>
+/* Layout: one narrow phone column of stacked cards; the pink-vs-blue tug-of-war bar is the hero. */
+:root {
+  --bg: #FFF0F4;
+  --surface: #FFFFFF;
+  --ink: #3A0F22;
+  --muted: #8C5B6E;
+  --line: #F4CCD8;
+  --leah: #E2346B;
+  --leah-soft: #FFDCE7;
+  --kompis: #2F5DF5;
+  --kompis-soft: #DFE6FF;
+  --ok: #16915A;
+  --ok-soft: #D7F3E5;
+  --warn: #A9480F;
+  --warn-soft: #FFE9D6;
+  --on-accent: #FFFFFF;
+  --scrim: rgba(58, 15, 34, .45);
+  --shadow: 0 1px 0 rgba(58, 15, 34, .04), 0 10px 28px -14px rgba(226, 52, 107, .45);
+  --f-display: 'Bagel Fat One', 'Arial Rounded MT Bold', 'Trebuchet MS', system-ui, sans-serif;
+  --f-body: 'Nunito', ui-rounded, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1B0B13; --surface: #2A1320; --ink: #FFE6EE; --muted: #C79AAD; --line: #46202F;
+    --leah: #FF5C90; --leah-soft: #4B1A2E; --kompis: #7C98FF; --kompis-soft: #1E2856;
+    --ok: #4FD69A; --ok-soft: #123A2A; --warn: #FFB27A; --warn-soft: #45260F;
+    --on-accent: #FFFFFF; --scrim: rgba(0, 0, 0, .6);
+    --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1B0B13; --surface: #2A1320; --ink: #FFE6EE; --muted: #C79AAD; --line: #46202F;
+  --leah: #FF5C90; --leah-soft: #4B1A2E; --kompis: #7C98FF; --kompis-soft: #1E2856;
+  --ok: #4FD69A; --ok-soft: #123A2A; --warn: #FFB27A; --warn-soft: #45260F;
+  --on-accent: #FFFFFF; --scrim: rgba(0, 0, 0, .6);
+  --shadow: 0 10px 28px -14px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { color-scheme: light; -webkit-text-size-adjust: 100%; }
+html, body { background: var(--bg); }
+body { margin: 0; min-height: 100vh; min-height: 100dvh; color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.45; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--leah); outline-offset: 2px; }
+svg path { fill: currentColor; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+
+.app {
+  max-width: 520px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: calc(18px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* Header */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.eyebrow { font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.who-chip {
+  border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 7px 14px; font-weight: 800; font-size: 14px; max-width: 48vw;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.brand h1 {
+  font-family: var(--f-display); font-weight: 400; font-size: clamp(34px, 10.4vw, 56px);
+  line-height: .95; letter-spacing: -.01em; display: flex; align-items: center; gap: 4px; margin-top: 6px;
+}
+.brand h1 .b { color: var(--leah); }
+.h1heart { display: inline-block; width: .62em; height: .62em; color: var(--leah); transform: rotate(14deg); flex: none; animation: beat 1.8s ease-in-out infinite; }
+.h1heart svg { width: 100%; height: 100%; display: block; }
+.tag { margin-top: 8px; color: var(--muted); font-weight: 700; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 16px 18px; box-shadow: var(--shadow); }
+.card h2 { font-size: 18px; font-weight: 900; }
+
+.banner { border-radius: 16px; padding: 12px 14px; font-weight: 700; font-size: 14px; background: var(--kompis-soft); color: var(--ink); }
+.banner[data-kind="warn"] { background: var(--warn-soft); color: var(--warn); }
+
+/* Who am I */
+.whocard h2 { font-family: var(--f-display); font-weight: 400; font-size: 26px; }
+.whocard p { color: var(--muted); font-weight: 700; margin-top: 2px; }
+.pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.pick button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+  border-radius: 18px; padding: 14px; border: 2px solid transparent; min-width: 0;
+}
+.pick .p-leah { background: var(--leah-soft); border-color: var(--leah); }
+.pick .p-kompis { background: var(--kompis-soft); border-color: var(--kompis); }
+.pick .pn { font-weight: 900; font-size: 18px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick .pr { font-size: 13px; font-weight: 700; color: var(--muted); }
+.pick .ph { width: 26px; height: 26px; }
+.pick .p-leah .ph { color: var(--leah); }
+.pick .p-kompis .ph { color: var(--kompis); }
+.pick button:active { transform: scale(.97); }
+
+/* Right now */
+.now { display: flex; align-items: center; gap: 14px; }
+.now-dot { width: 14px; height: 14px; border-radius: 50%; flex: none; background: var(--muted); position: relative; }
+.now-dot[data-s="free"] { background: var(--ok); }
+.now-dot[data-s="leah"] { background: var(--leah); }
+.now-dot[data-s="kompis"] { background: var(--kompis); }
+.now-dot::after { content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid currentColor; opacity: 0; }
+.now-dot[data-s="free"]::after { color: var(--ok); animation: ping 2s ease-out infinite; }
+.now-dot[data-s="leah"]::after { color: var(--leah); animation: ping 2s ease-out infinite; }
+.now-dot[data-s="kompis"]::after { color: var(--kompis); animation: ping 2s ease-out infinite; }
+.now-body { min-width: 0; }
+.now-main { font-weight: 900; font-size: 20px; line-height: 1.2; margin-top: 2px; }
+.now-sub { color: var(--muted); font-weight: 700; font-size: 14px; }
+
+/* Duel */
+.duel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.seg { display: inline-flex; background: var(--bg); border-radius: 999px; padding: 3px; border: 1px solid var(--line); }
+.seg button { border: 0; background: transparent; border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 800; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.duel-nums { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.side { display: flex; flex-direction: column; min-width: 0; }
+.side.kompis { align-items: flex-end; text-align: right; }
+.pct { font-family: var(--f-display); font-size: clamp(46px, 15vw, 68px); line-height: 1; font-variant-numeric: tabular-nums; }
+.side.leah .pct { color: var(--leah); }
+.side.kompis .pct { color: var(--kompis); }
+.side .nm { font-weight: 900; font-size: 16px; margin-top: 4px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side .hrs { color: var(--muted); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.bar { position: relative; height: 18px; border-radius: 999px; background: var(--kompis); margin: 18px 6px 4px; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; width: 50%; background: var(--leah); border-radius: 999px 0 0 999px; transition: width .7s cubic-bezier(.2, .8, .2, 1); }
+.bar.empty { background: var(--kompis-soft); }
+.bar.empty .fill { background: var(--leah-soft); }
+.knot { position: absolute; top: 50%; left: 50%; width: 38px; height: 38px; transform: translate(-50%, -50%); transition: left .7s cubic-bezier(.2, .8, .2, 1); }
+.knot svg { width: 100%; height: 100%; display: block; animation: beat 1.6s ease-in-out infinite; }
+.knot svg path { fill: var(--surface); stroke: var(--ink); stroke-width: 1.7; }
+.verdict { margin-top: 14px; font-weight: 800; font-size: 15px; background: var(--bg); border-radius: 14px; padding: 10px 12px; }
+
+/* Week */
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.sec-head h2 { font-size: 18px; font-weight: 900; }
+.legend { display: flex; gap: 10px; font-size: 12px; font-weight: 800; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 4px; max-width: 34vw; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.legend .lg-leah { background: var(--leah); }
+.legend .lg-kompis { background: var(--kompis); }
+.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.day {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 7px;
+  border-radius: 14px; background: var(--surface); border: 1.5px solid var(--line); min-width: 0;
+}
+.day.today { border-color: var(--leah); background: var(--leah-soft); }
+.day .wd { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.day .dn { font-family: var(--f-display); font-size: 20px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.day .hs { display: flex; gap: 1px; height: 13px; align-items: center; }
+.mini { width: 12px; height: 12px; display: block; }
+.mini svg { width: 100%; height: 100%; display: block; }
+.mini.leah { color: var(--leah); }
+.mini.kompis { color: var(--kompis); }
+.free-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--line); }
+.day:active { transform: scale(.95); }
+
+/* CTA */
+.cta {
+  width: 100%; border: 0; border-radius: 20px; padding: 17px 20px;
+  background: var(--leah); color: var(--on-accent);
+  font-family: var(--f-display); font-size: 24px; letter-spacing: .01em;
+  box-shadow: var(--shadow); transition: transform .12s;
+}
+.cta:active { transform: scale(.98); }
+.cta:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+/* Lists */
+.dh { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 14px 0 2px; }
+.items { list-style: none; margin: 0; padding: 0; }
+.item { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.items .item:first-child { border-top: 0; }
+.badge { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; }
+.badge svg { width: 20px; height: 20px; }
+.badge.leah { background: var(--leah-soft); color: var(--leah); }
+.badge.kompis { background: var(--kompis-soft); color: var(--kompis); }
+.mid { min-width: 0; }
+.mid .t { font-weight: 900; }
+.mid .time { font-variant-numeric: tabular-nums; }
+.mid .act { font-weight: 700; }
+.mid .meta { color: var(--muted); font-size: 14px; font-weight: 700; }
+.mid .note { font-size: 14px; font-style: italic; overflow-wrap: anywhere; }
+.del { border: 1.5px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.del.armed { background: var(--leah); border-color: var(--leah); color: var(--on-accent); }
+.empty { color: var(--muted); font-weight: 700; padding: 8px 0 2px; }
+details.hist { margin-top: 14px; border-top: 1.5px dashed var(--line); padding-top: 10px; }
+details.hist summary { font-weight: 900; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.hist summary::-webkit-details-marker { display: none; }
+details.hist summary::after { content: "+"; font-family: var(--f-display); font-size: 22px; color: var(--leah); }
+details.hist[open] summary::after { content: "−"; }
+.count { font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 800; margin-left: 8px; margin-right: auto; }
+
+/* Fine print */
+.fine { color: var(--muted); font-size: 12.5px; font-weight: 700; padding: 4px 4px 0; }
+.fine h3 { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 900; margin-bottom: 4px; }
+.fine ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.fine li span { font-variant-numeric: tabular-nums; color: var(--leah); font-weight: 900; margin-right: 4px; }
+
+/* Sheets */
+.sheet-wrap { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.scrim { position: absolute; inset: 0; background: var(--scrim); animation: fade .2s ease-out; }
+.sheet {
+  position: relative; width: 100%; max-width: 560px; max-height: 92%; overflow: auto;
+  background: var(--surface); border-radius: 26px 26px 0 0;
+  padding-top: 10px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(18px, env(safe-area-inset-left, 0px));
+  padding-right: max(18px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+  animation: up .28s cubic-bezier(.2, .8, .2, 1);
+}
+.grab { width: 44px; height: 5px; border-radius: 999px; background: var(--line); margin: 0 auto 2px; }
+.sheet h2 { font-family: var(--f-display); font-weight: 400; font-size: 28px; line-height: 1.05; }
+.sheet .sub { color: var(--muted); font-weight: 700; margin-top: 2px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 900; font-size: 14px; min-width: 0; }
+.field input {
+  font: inherit; font-weight: 700; font-size: 16px; padding: 12px 14px; min-height: 48px;
+  border-radius: 14px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink);
+  width: 100%; min-width: 0; -webkit-appearance: none; appearance: none;
+}
+.field input:focus { outline: none; border-color: var(--leah); box-shadow: 0 0 0 3px var(--leah-soft); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.quick { display: flex; flex-wrap: wrap; gap: 8px; }
+.quick button { border: 1.5px dashed var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 800; }
+.dur { color: var(--muted); font-weight: 800; font-size: 13px; min-height: 1em; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend { font-weight: 900; font-size: 14px; padding: 0; margin-bottom: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; pointer-events: none; }
+.chip span { display: inline-block; padding: 8px 13px; border-radius: 999px; border: 1.5px solid var(--line); font-weight: 800; font-size: 14px; cursor: pointer; user-select: none; }
+.chip input:focus-visible + span { outline: 3px solid var(--leah); outline-offset: 2px; }
+.chip input:checked + span { background: var(--leah); border-color: var(--leah); color: var(--on-accent); }
+form[data-me="kompis"] .chip input:checked + span { background: var(--kompis); border-color: var(--kompis); }
+form[data-me="kompis"] .cta { background: var(--kompis); }
+.warn { background: var(--warn-soft); color: var(--warn); border-radius: 14px; padding: 10px 12px; font-weight: 800; font-size: 14px; }
+.actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: stretch; }
+.ghost { border: 1.5px solid var(--line); background: transparent; border-radius: 18px; padding: 0 18px; font-weight: 900; }
+.actions .cta { font-size: 20px; padding: 15px 16px; }
+.names { border-top: 1.5px dashed var(--line); padding-top: 12px; }
+.names summary { font-weight: 900; cursor: pointer; color: var(--muted); }
+.names .row2 { margin-top: 10px; }
+.hint { font-weight: 700; font-size: 12.5px; color: var(--muted); }
+
+/* Damage reports */
+.now-cond { margin-top: 4px; font-size: 13px; font-weight: 800; color: var(--warn); }
+.now-cond.fine-cond { color: var(--ok); }
+.inspect { border-style: dashed; border-color: var(--warn); }
+.inspect-text { font-weight: 800; margin-top: 4px; }
+.inspect-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.dmg-btn { border: 1.5px dashed var(--warn); color: var(--warn); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.ok-btn { border: 1.5px solid var(--ok); color: var(--ok); background: var(--ok-soft); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.item-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.dmg { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px; font-size: 13px; font-weight: 800; background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 3px 8px; max-width: 100%; }
+.dmg.none { background: var(--ok-soft); color: var(--ok); }
+.dmg-stats { margin-top: 14px; padding-top: 12px; border-top: 1.5px dashed var(--line); }
+.dmg-row { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; font-weight: 800; color: var(--muted); margin-top: 4px; }
+.dmg-row b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.dmg-row .sw { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+.dmg-row .sw.leah { background: var(--leah); }
+.dmg-row .sw.kompis { background: var(--kompis); }
+.dmg-verdict { font-size: 14px; font-weight: 800; margin-top: 6px; }
+.dmg-verdict:empty { display: none; }
+.levels { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.lvl { position: relative; min-width: 0; }
+.lvl input { position: absolute; opacity: 0; pointer-events: none; }
+.lvl span { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 0 6px; border-radius: 14px; border: 1.5px solid var(--line); font-family: var(--f-display); font-size: 20px; line-height: 1.1; cursor: pointer; }
+.lvl span small { font-family: var(--f-body); font-size: 12px; }
+.lvl input:checked + span { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+.lvl input:focus-visible + span { outline: 3px solid var(--leah); outline-offset: 2px; }
+.level-label { font-weight: 800; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.linkish { border: 0; background: transparent; color: var(--muted); font-weight: 800; text-decoration: underline; padding: 4px; align-self: center; font-size: 14px; }
+.code-state { font-size: 12px; font-weight: 900; color: var(--ok); margin-left: 4px; }
+.code-state.missing { color: var(--warn); }
+.install { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: center; border: 1.5px dashed var(--line); border-radius: 18px; padding: 10px 12px; font-weight: 700; font-size: 14px; }
+.install .ih { width: 26px; height: 26px; color: var(--leah); }
+.install .ih svg { width: 100%; height: 100%; display: block; }
+.install-x { border: 0; background: transparent; color: var(--muted); font-size: 16px; padding: 6px; border-radius: 10px; }
+.save { margin-top: 10px; width: 100%; border: 0; border-radius: 14px; padding: 12px; background: var(--ink); color: var(--bg); font-weight: 900; }
+
+/* Toast + hearts */
+.toast {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); z-index: 70;
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  width: max-content; max-width: calc(100% - 32px);
+  background: var(--ink); color: var(--bg); border-radius: 18px; padding: 12px 16px;
+  font-weight: 800; font-size: 14px; text-align: center; transition: opacity .2s, transform .25s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.burst { position: fixed; inset: 0; pointer-events: none; z-index: 60; overflow: hidden; }
+.fly { position: absolute; bottom: -40px; display: block; }
+.fly svg { width: 100%; height: 100%; display: block; }
+.fly.leah { color: var(--leah); }
+.fly.kompis { color: var(--kompis); }
+
+@keyframes beat { 0%, 100% { transform: scale(1); } 14% { transform: scale(1.16); } 28% { transform: scale(1); } 42% { transform: scale(1.1); } 56% { transform: scale(1); } }
+.h1heart { animation-name: beat-tilt; }
+@keyframes beat-tilt { 0%, 100% { transform: rotate(14deg) scale(1); } 14% { transform: rotate(14deg) scale(1.16); } 28% { transform: rotate(14deg) scale(1); } 42% { transform: rotate(14deg) scale(1.1); } 56% { transform: rotate(14deg) scale(1); } }
+@keyframes ping { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(1.6); } }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (max-width: 360px) {
+  .days { gap: 4px; }
+  .day .dn { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="brand">
+    <div class="topbar">
+      <span class="eyebrow">Offisielt bookingsystem</span>
+      <button class="who-chip" id="whoBtn" type="button" aria-label="Bytt hvem du er">Hvem er du?</button>
+    </div>
+    <h1>Sindre<span class="b">bassen</span><span class="h1heart" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21.2s-7.6-4.6-10.1-9.4C.3 8.6 2.1 4.6 6 4.2c2.3-.2 4.3 1 6 3.1 1.7-2.1 3.7-3.3 6-3.1 3.9.4 5.7 4.4 4.1 7.6-2.5 4.8-10.1 9.4-10.1 9.4z"/></svg></span></h1>
+    <p class="tag">Én Sindre. To som vil ha ham. Book ansvarlig.</p>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <section class="card whocard" id="whoCard" hidden>
+    <h2>Hvem er du?</h2>
+    <p>Vær ærlig. Sindre ser alt.</p>
+    <div class="pick">
+      <button type="button" class="p-leah" data-pick="leah"><span class="ph"></span><span class="pn" data-name="leah">Leah</span><span class="pr">kjæresten 💕</span></button>
+      <button type="button" class="p-kompis" data-pick="kompis"><span class="ph"></span><span class="pn" data-name="kompis">Kompisen</span><span class="pr">bestekompisen 🍻</span></button>
+    </div>
+  </section>
+
+  <section class="card now" aria-live="polite">
+    <span class="now-dot" id="nowDot" data-s="idle"></span>
+    <div class="now-body">
+      <div class="eyebrow">Sindre akkurat nå</div>
+      <div class="now-main" id="nowMain">Sjekker…</div>
+      <div class="now-sub" id="nowSub"></div>
+      <div class="now-cond" id="nowCond" hidden></div>
+    </div>
+  </section>
+
+  <section class="card inspect" id="inspect" hidden>
+    <div class="eyebrow">Inspeksjon etter bruk</div>
+    <p class="inspect-text" id="inspectText"></p>
+    <div class="inspect-actions">
+      <button type="button" class="dmg-btn" id="inspectDmg">Meld skade 🩹</button>
+      <button type="button" class="ok-btn" id="inspectOk">Ingen skade ✨</button>
+    </div>
+  </section>
+
+  <section class="card duel">
+    <div class="duel-head">
+      <h2>Hvem har Sindre mest?</h2>
+      <div class="seg" role="group" aria-label="Hva skal telles">
+        <button type="button" data-mode="past" aria-pressed="true">Hittil</button>
+        <button type="button" data-mode="all" aria-pressed="false">Alt booket</button>
+      </div>
+    </div>
+    <div class="duel-nums">
+      <div class="side leah"><span class="pct" id="pctLeah">50%</span><span class="nm" data-name="leah">Leah</span><span class="hrs" id="hrsLeah">0 t</span></div>
+      <div class="side kompis"><span class="pct" id="pctKompis">50%</span><span class="nm" data-name="kompis">Kompisen</span><span class="hrs" id="hrsKompis">0 t</span></div>
+    </div>
+    <div class="bar empty" id="bar" role="img" aria-label="Fordeling av Sindre-tid">
+      <div class="fill" id="barFill"></div>
+      <div class="knot" id="knot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.2s-7.6-4.6-10.1-9.4C.3 8.6 2.1 4.6 6 4.2c2.3-.2 4.3 1 6 3.1 1.7-2.1 3.7-3.3 6-3.1 3.9.4 5.7 4.4 4.1 7.6-2.5 4.8-10.1 9.4-10.1 9.4z"/></svg></div>
+    </div>
+    <p class="verdict" id="verdict">Teller timer…</p>
+    <div class="dmg-stats">
+      <div class="eyebrow">Skadestatistikk</div>
+      <div class="dmg-row" id="dmgStats">Ingen skader meldt ennå.</div>
+      <p class="dmg-verdict" id="dmgVerdict"></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Uka framover</h2>
+      <div class="legend"><span><i class="lg-leah"></i><b data-name="leah">Leah</b></span><span><i class="lg-kompis"></i><b data-name="kompis">Kompisen</b></span></div>
+    </div>
+    <div class="days" id="days"></div>
+  </section>
+
+  <button class="cta" id="bookBtn" type="button">Book Sindre 💘</button>
+
+  <section class="card">
+    <h2>Kommende bookinger</h2>
+    <div id="upcoming"><p class="empty">Henter Sindres kalender…</p></div>
+    <details class="hist">
+      <summary>Sindre-loggen <span class="count" id="pastCount">0</span></summary>
+      <div id="past"></div>
+    </details>
+  </section>
+
+  <section class="install" id="installTip" hidden>
+    <span class="ih" aria-hidden="true"></span>
+    <p id="installText">Legg Sindre på Hjem-skjermen, så blir han en app.</p>
+    <button type="button" class="install-x" id="installX" aria-label="Skjul tipset">✕</button>
+  </section>
+
+  <footer class="fine">
+    <h3>Vilkår og betingelser</h3>
+    <ol>
+      <li><span>§1</span>Sindre leveres tilbake i samme stand som utlevert.</li>
+      <li><span>§2</span>Sindre har ingen vetorett, men har lov til å sutre.</li>
+      <li><span>§3</span>Dobbeltbooking er umulig. Prøver du, spanderer du middag.</li>
+      <li><span>§4</span>Sindrebassen AS tar ikke ansvar for sjalusi.</li>
+      <li><span>§5</span>Skader meldes innen 48 timer. Sindre har ikke kaskoforsikring.</li>
+    </ol>
+  </footer>
+</div>
+
+<!-- Booking sheet -->
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="scrim" data-close></div>
+  <form class="sheet" id="form" novalidate>
+    <div class="grab"></div>
+    <div>
+      <h2>Book Sindre</h2>
+      <p class="sub" id="formWho">Booker som …</p>
+    </div>
+    <label class="field">Dato<input type="date" id="fDate" required></label>
+    <div class="row2">
+      <label class="field">Fra<input type="time" id="fStart" step="900" required></label>
+      <label class="field">Til<input type="time" id="fEnd" step="900" required></label>
+    </div>
+    <div class="quick" aria-label="Hurtigvalg">
+      <button type="button" data-q="15:00-18:00">Ettermiddag</button>
+      <button type="button" data-q="18:00-23:00">Kvelden 🌙</button>
+      <button type="button" data-q="10:00-22:00">Hele dagen ☀️</button>
+    </div>
+    <p class="dur" id="fDur"></p>
+    <fieldset>
+      <legend>Hva skal dere gjøre?</legend>
+      <div class="chips" id="fActs"></div>
+    </fieldset>
+    <label class="field">Notat (valgfritt)<input type="text" id="fNote" maxlength="80" placeholder="F.eks. «han skylder meg pizza»"></label>
+    <label class="field" id="codeField" hidden>Hemmelig Sindre-kode
+      <input type="text" id="fCode" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Bare du og Leah vet den">
+      <span class="hint">Huskes på denne telefonen etter første booking.</span>
+    </label>
+    <p class="warn" id="fWarn" hidden></p>
+    <div class="actions">
+      <button type="button" class="ghost" data-close>Avbryt</button>
+      <button type="submit" class="cta" id="fSubmit">Lås inn Sindre 🔒</button>
+    </div>
+  </form>
+</div>
+
+<!-- Who sheet -->
+<div class="sheet-wrap" id="whoSheet" hidden>
+  <div class="scrim" data-close></div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div>
+      <h2>Hvem er du?</h2>
+      <p class="sub">Vær ærlig. Sindre ser alt.</p>
+    </div>
+    <div class="pick">
+      <button type="button" class="p-leah" data-pick="leah"><span class="ph"></span><span class="pn" data-name="leah">Leah</span><span class="pr">kjæresten 💕</span></button>
+      <button type="button" class="p-kompis" data-pick="kompis"><span class="ph"></span><span class="pn" data-name="kompis">Kompisen</span><span class="pr">bestekompisen 🍻</span></button>
+    </div>
+    <details class="names" id="codeBox">
+      <summary>Sindre-kode <span class="code-state" id="codeState"></span></summary>
+      <label class="field" style="margin-top:10px">Koden dere deler
+        <input type="text" id="nCode" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Skriv inn koden">
+      </label>
+      <button type="button" class="save" id="saveCode">Lagre kode</button>
+    </details>
+    <details class="names">
+      <summary>Endre navn (gjelder for begge)</summary>
+      <div class="row2">
+        <label class="field">Kjæresten<input type="text" id="nLeah" maxlength="20" autocomplete="off"></label>
+        <label class="field">Bestekompisen<input type="text" id="nKompis" maxlength="20" autocomplete="off"></label>
+      </div>
+      <button type="button" class="save" id="saveNames">Lagre navn</button>
+    </details>
+  </div>
+</div>
+
+<!-- Damage sheet -->
+<div class="sheet-wrap" id="dmgSheet" hidden>
+  <div class="scrim" data-close></div>
+  <form class="sheet" id="dmgForm" novalidate>
+    <div class="grab"></div>
+    <div>
+      <h2>Skademelding 🩹</h2>
+      <p class="sub" id="dmgWho">…</p>
+    </div>
+    <fieldset>
+      <legend>Hva er skaden?</legend>
+      <div class="chips" id="dKinds"></div>
+    </fieldset>
+    <fieldset id="dLevelSet">
+      <legend>Alvorlighetsgrad</legend>
+      <div class="levels" id="dLevels"></div>
+      <p class="level-label" id="dLevelLabel"></p>
+    </fieldset>
+    <label class="field">Kommentar (valgfritt)<input type="text" id="dNote" maxlength="120" placeholder="F.eks. «kom hjem uten stemme»"></label>
+    <label class="field" id="dCodeField" hidden>Hemmelig Sindre-kode
+      <input type="text" id="dCode" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Bare du og Leah vet den">
+    </label>
+    <p class="warn" id="dWarn" hidden></p>
+    <div class="actions">
+      <button type="button" class="ghost" data-close>Avbryt</button>
+      <button type="submit" class="cta" id="dSubmit">Send skademelding</button>
+    </div>
+    <button type="button" class="linkish" id="dClear" hidden>Trekk tilbake skademeldingen</button>
+  </form>
+</div>
+
+<div class="burst" id="burst" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
