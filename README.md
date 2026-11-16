@@ -21,3 +21,4 @@ Bookingsystem for Sindre. Leah og bestekompisen deler ham, og appen holder styr 
 - Ren HTML/CSS/JS (`index.html`, `app.js`), ingen byggesteg. Ligger på GitHub Pages.
 - Data i Supabase (`supabase/schema.sql`). Nøkkelen i `app.js` er den offentlige «anon»-nøkkelen. Den gir bare lesetilgang, og alle endringer går gjennom databasefunksjoner som sjekker Sindre-koden.
 - Sindre-koden lagres bare som en bcrypt-hash i databasen, aldri i dette repoet.
+- `.github/workflows/keepalive.yml` pinger databasen hver tredje dag så gratisprosjektet ikke settes på pause.
